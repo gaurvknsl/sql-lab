@@ -1,0 +1,24 @@
+# Python-generated files and optional development environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Device-local secrets, progress exports, logs, and development captures
+.env
+.env.*
+!.env.example
+sql-lab-progress*.json
+*.log
+.taste-skill/
+work/
+
+# Editor/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
