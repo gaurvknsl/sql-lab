@@ -1,7 +1,9 @@
 """Exam-focused curriculum. Canonical answers are examples, never string-match keys."""
 from copy import deepcopy
+from hospital import HOSPITAL_SCHEMA, add_hospital_questions
 
 ROUNDS = [
+ {'id':'hospital','name':"Today's exam · Hospital",'level':'Assignment 5/6 · actual data','description':'Your PATIENT, DOCTOR, WARD and PHARMACY data: original questions, complex SQL, and PL/SQL rehearsal.','minutes':60},
  {'id':'first-steps','name':'First queries','level':'Newbie','description':'Get comfortable with SELECT, columns, filters, and sorting.','minutes':20},
  {'id':'everyday','name':'Everyday Oracle','level':'Foundation','description':'NULLs, strings, dates, expressions, and clean output.','minutes':25},
  {'id':'joins','name':'Connect the tables','level':'Building confidence','description':'Follow keys, join three tables, and keep missing matches.','minutes':25},
@@ -348,6 +350,7 @@ for source,marks in [('paper-flight-a',4),('paper-order-a',4),('paper-order-b',4
     base.update(id='mock-'+source,round='mock',marks=marks)
     QUESTIONS.append(base)
 
+add_hospital_questions(q)
 BY_ID={q['id']:q for q in QUESTIONS}
 for _id in ('number-loop','cursor-manual','parameter-cursor'):
     BY_ID[_id]['spec']['output']='numeric_rows'
@@ -372,3 +375,4 @@ SCHEMA={
  'flight':[('flno','NUMBER · PK'),('airline','VARCHAR2(40)'),('departure_code','FK → airport.code'),('arrival_code','FK → airport.code'),('departure_date_time','DATE'),('arrival_date_time','DATE')],
  'seat':[('flno','FK → flight.flno · PK part'),('booking_date','DATE · PK part'),('seat_no','NUMBER · PK part'),('customer_name','VARCHAR2(60)'),('customer_phone','VARCHAR2(20)')],
 }
+SCHEMA.update(HOSPITAL_SCHEMA)

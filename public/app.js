@@ -288,6 +288,8 @@ async function boot(){
   try {
     catalog=await api('/api/catalog');questions=catalog.questions;rounds=catalog.rounds;state=loadState();
     if(!rounds.some(r=>r.id===state.round))state.round=rounds[0].id;
+    const requestedRound=new URLSearchParams(window.location.search).get('round');
+    if(requestedRound&&rounds.some(r=>r.id===requestedRound))state.round=requestedRound;
     renderQuestion();setInterval(renderClock,1000);
   }catch(e){$('#page-title').textContent='The lab is offline.';$('#round-description').textContent='Start the local Python server, then reload this page.';$('#question-title').textContent='Could not load questions';$('#question-prompt').textContent=e.message;$('#main').setAttribute('aria-busy','false');$('#run-query').disabled=true;}
 }

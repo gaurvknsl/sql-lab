@@ -63,19 +63,22 @@ def trigger_trial(db,rt,test):
       'update_flight': ["UPDATE flight SET flno = 999 WHERE flno = 123", "UPDATE flight SET flno = 777 WHERE flno = 124", "UPDATE flight SET flno = 888 WHERE flno = 126"],
       'update_all_keys': ["UPDATE flight SET flno = 999 WHERE flno = 123", "UPDATE airport SET code = 'CHE' WHERE code = 'MAA'", "UPDATE airport SET code = 'KOCH' WHERE code = 'COK'"],
       'delete_all_parents': ["DELETE FROM customer WHERE ssn = 'C1'", "DELETE FROM item WHERE no = 14", "DELETE FROM item WHERE no = 12", "DELETE FROM customer WHERE ssn = 'C3'"],
+      'hospital_update': ['UPDATE patient SET pno=91 WHERE pno=11','UPDATE patient SET pno=92 WHERE pno=12','UPDATE patient SET pno=93 WHERE pno=13'],
+      'hospital_delete': ['DELETE FROM patient WHERE pno=11','DELETE FROM patient WHERE pno=13','DELETE FROM patient WHERE pno=12'],
       'amount': ["INSERT INTO orders(orno,item_no,qty,order_date,customer_ssn) VALUES (9900,90,5,DATE '2025-01-12','C2')", "UPDATE orders SET qty = 7 WHERE orno = 9900", "UPDATE orders SET item_no = 67 WHERE orno = 9900"],
       'validate': ["INSERT INTO orders(orno,item_no,qty,order_date,customer_ssn) VALUES (9900,90,5,DATE '2025-01-12','C2')", "UPDATE orders SET qty = 0 WHERE orno = 9900", "UPDATE orders SET qty = -1 WHERE orno = 9900", "UPDATE orders SET qty = NULL WHERE orno = 9900", "UPDATE orders SET qty = 2 WHERE orno = 9900"]
     }
+    tables=['patient','doctor','ward','pharmacy'] if test.startswith('hospital_') else ['customer','item','orders','airport','flight','seat']
     results=[]
     for sql in cases[test]:
         db.execute('SAVEPOINT trial')
         try:
             rt.dml(tokens(sql),{})
-            results.append((False,snapshot(db,['customer','item','orders','airport','flight','seat'])))
+            results.append((False,snapshot(db,tables)))
             db.execute('RELEASE trial')
         except (LabError,sqlite3.Error) as exc:
             db.execute('ROLLBACK TO trial'); db.execute('RELEASE trial')
-            results.append((True,snapshot(db,['customer','item','orders','airport','flight','seat'])))
+            results.append((True,snapshot(db,tables)))
     return results
 
 

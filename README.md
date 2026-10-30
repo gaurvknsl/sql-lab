@@ -1,6 +1,6 @@
 # SQL / LAB
 
-A local, exam-focused Oracle SQL and PL/SQL practice website. **80 exercises, 11 selectable rounds, and a 60-minute 40-mark mock.**
+A local, exam-focused Oracle SQL and PL/SQL practice website. **107 exercises, 12 selectable rounds, and a 60-minute 40-mark mock.**
 
 [![Tests](https://github.com/gaurvknsl/sql-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/gaurvknsl/sql-lab/actions/workflows/tests.yml)
 
@@ -54,6 +54,14 @@ For a server without automatic browser opening, use `python server.py` (or `py -
 
 ## How to practise
 
+### Today's exam: hospital assignment 5/6
+
+Choose **Today's exam · Hospital** at the top of the round picker, or open **http://127.0.0.1:8765/?round=hospital**. It contains 27 questions: the four assignment queries, 16 additional SQL questions on the same schema, and seven PL/SQL exercises covering SELECT INTO, cursors, procedures, functions and triggers.
+
+The visible PATIENT, DOCTOR, WARD and PHARMACY rows reproduce the inserted sample values in the assignment screenshots, including ward **90**, the trailing space in **ORTHO **, and the September 2026 purchases. No patient records beyond that assignment's synthetic examples are inferred. Separate grading datasets add explicit edge cases.
+
+The original prompt names ward 5, while the inserted rows and submitted query use ward 90; the practice question follows the actual rows and explains this. The original April query correctly has no visible matches, and uses a month function rather than applying LIKE to a DATE. “Joint pains” follows the assignment's stated orthopedic-doctor interpretation because there is no diagnosis field. The pharmacy key is `(billno, medicinename)` and the ward key is `(wno, bed_no)`.
+
 Choose any round from the selector at the top. Start with First queries if needed. Read the question and use Schema or Sample data to understand the tables. Type the query and select Run query, or press Ctrl+Enter. On an incorrect attempt, use Try again or View answer. A correct attempt offers the next question. You can skip and return to any question from Question list.
 
 Help mode shows the relevant concept, progressive hints, and common-error diagnostics while typing. Normal mode hides these. Reference contains only the SQL and PL/SQL patterns used in the rounds. Viewing an answer does not complete a question. Completed questions that used help are distinguished from independent solves and remain in Review.
@@ -94,9 +102,11 @@ Execution has input, row, instruction and loop limits. The HTTP server listens o
 - `server.py`: local HTTP endpoints and behavioral grading.
 - `engine.py`: SQLite fixtures, Oracle helpers, PL/SQL parser and bounded interpreter.
 - `questions.py`: curriculum, hints, schemas, sample-paper corrections and reference solutions.
+- `hospital.py`: assignment 5/6 hospital rows, hidden variants, schema and the dedicated exam round.
 - `public/`: buildless HTML, CSS and JavaScript frontend.
 - `test_lab.py`: reference, alternate-answer, negative and runtime tests.
 - `test_http.py`: real HTTP endpoint and asset tests.
+- `test_hospital.py`: original-row fidelity and hospital-query edge cases.
 - `.github/workflows/tests.yml`: Windows/Linux checks on Python 3.10 and 3.13, plus macOS on Python 3.13.
 - `DESIGN.md`: brief, direction and visual QA notes.
 

@@ -9,6 +9,7 @@ import math
 import re
 import sqlite3
 from collections import Counter
+from hospital import seed_hospital
 
 TODAY = dt.date(2026, 10, 29)
 EPOCH = dt.datetime(1970, 1, 1)
@@ -33,7 +34,7 @@ def date_value(value, fmt="YYYY-MM-DD"):
 def to_char(value, fmt=None, nls=None):
     if value is None: return None
     if fmt is None: return str(value)
-    if not any(x in fmt.upper() for x in ["DD", "MON", "YYYY", "HH", "MI", "SS", "DAY"]):
+    if not any(x in fmt.upper() for x in ["DD", "MM", "MON", "YYYY", "HH", "MI", "SS", "DAY"]):
         return str(value)
     d = EPOCH + dt.timedelta(seconds=round(float(value)*86400,3))
     fm = "FM" in fmt.upper()
@@ -173,6 +174,7 @@ def database(variant=0):
         loans.extend([(104,2,1002,today-7,today+7),(105,3,1002,today-5,today+9),(101,1,1002,today-4,today+10)])
     db.executemany('INSERT INTO book_copies VALUES (?,?,?)',copies)
     db.executemany('INSERT INTO book_loans VALUES (?,?,?,?,?)',loans)
+    seed_hospital(db,variant,date_value)
     db.commit()
     calls=[0]
     def budget():
