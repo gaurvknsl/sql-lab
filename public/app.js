@@ -3,11 +3,12 @@
 const $ = (s,root=document) => root.querySelector(s);
 const $$ = (s,root=document) => [...root.querySelectorAll(s)];
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KEY = 'sql-lab-prep-v1';
+const DSA = new URLSearchParams(location.search).get('mode')==='dsa';
+const KEY = DSA ? 'dsa-lab-prep-v1' : 'sql-lab-prep-v1';
 const icon = name => ({check:'<svg viewBox="0 0 18 18" aria-hidden="true"><path d="m3 9 4 4 8-8"/></svg>',error:'<svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.5"/><path d="M9 5v5m0 2v1"/></svg>',table:'<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M6 6v8"/></svg>'}[name] || '');
 let catalog, questions, rounds, state, activeTab='schema', activeTable='', currentResult=null, viewToken=0, hintTimer, saveTimer, toastTimer, modalContext={}, tabEscape=false, submitting=false;
 
-function initialState(){return {version:1,round:'first-steps',positions:{},help:true,items:{},mock:null};}
+function initialState(){return {version:1,round:DSA?'traversals':'first-steps',positions:{},help:true,items:{},mock:null};}
 function loadState(){
   try { const value=JSON.parse(localStorage.getItem(KEY)); if(value?.version===1 && value.items && value.positions) return {...initialState(),...value}; } catch{}
   return initialState();
@@ -18,6 +19,7 @@ function save(){
 }
 function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,2700);}
 async function api(path,body){
+  if(DSA)path=path.replace('/api/','/api/dsa/');
   const response=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});
   const data=await response.json();if(!response.ok) throw new Error(data.error || 'The local runner could not be reached.');return data;
 }
@@ -44,17 +46,18 @@ function renderProgress(){
 function renderQuestion(){
   const q=question(),p=progress(q.id),r=round();viewToken++;activeTab='schema';activeTable=q.tables[0]||'';
   $('#round-name').textContent=r.name;$('#round-level').textContent=r.level;
-  $('#page-title').textContent=r.id==='mock'?'Your exam rehearsal.':'One query closer.';
+  $('#page-title').textContent=DSA?'Trees & graphs.':r.id==='mock'?'Your exam rehearsal.':'One query closer.';
   $('#round-description').textContent=r.description;
   $('#question-position').textContent=`Question ${index()+1} of ${roundQuestions().length}${r.id==='mock'?` · ${q.marks} marks`:''}`;
-  $('#question-kind').textContent=q.kind==='sql'?'SQL':'PL/SQL';
+  $('#question-kind').textContent=DSA?(q.kind==='c'?'C - coding':'Written trace'):q.kind==='sql'?'SQL':'PL/SQL';
   $('#question-title').textContent=q.title;$('#question-prompt').textContent=q.prompt;
   $('#question-note').textContent=q.note||'';$('#question-note').hidden=!q.note;
   $('#concept-copy').textContent=q.lesson||'';
-  $('#file-name').textContent=q.kind==='sql'?'worksheet.sql':'program.sql';
+  $('#file-name').textContent=DSA?(q.kind==='c'?'solution.c':'trace.txt'):q.kind==='sql'?'worksheet.sql':'program.sql';
   $('#editor').value=p.draft===undefined?(q.starter||''):p.draft;
-  $('#editor').placeholder=q.kind==='sql'?'Type your query here…':'Write your PL/SQL program here…';
-  $('#sql-prompt').textContent=q.kind==='sql'?'SQL>':'PLS>';
+  $('#editor').placeholder=DSA?(q.kind==='c'?'Write your C function here…':'Enter your trace answer here…'):q.kind==='sql'?'Type your query here…':'Write your PL/SQL program here…';
+  $('#sql-prompt').textContent=DSA?(q.kind==='c'?'C>':'ANS>'):q.kind==='sql'?'SQL>':'PLS>';
+  if(DSA)$('#editor-tip').textContent=q.kind==='c'?'C99 - local compiler - 2 seconds per test':'Trace answer - values separated by spaces';
   $('#restore-starter').hidden=!q.starter;
   $('#previous-question').disabled=index()===0;
   $('#skip-question').textContent=index()===roundQuestions().length-1?'Choose round →':'Skip for now →';
@@ -71,7 +74,7 @@ function updateEditor(){
   $('#line-numbers').textContent=Array.from({length:Math.max(lines+3,10)-1},(_,i)=>i+2).join('\n');
   $('#clear-editor').disabled=!editor.value;
   $('#run-query').disabled=submitting || !editor.value.trim() || mockExpired();
-  $('#run-query span').textContent=submitting?'Checking…':q.kind==='sql'?'Run query':'Run program';
+  $('#run-query span').textContent=submitting?'Checking…':DSA?(q.kind==='c'?'Compile & run':'Check answer'):q.kind==='sql'?'Run query':'Run program';
   $('#question-status').textContent=p.solved?(p.assisted?'Completed with help':'Completed independently'):p.revealed?'Answer viewed':'';
   $('#question-status').classList.toggle('solved',p.solved);
 }
@@ -105,6 +108,9 @@ async function renderData(){
   const q=question(),token=viewToken,tab=activeTab;
   $$('.data-tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
   $('#data-content').setAttribute('aria-labelledby',`${tab}-tab`);
+  if(DSA && tab!=='expected'){
+    $('#data-content').innerHTML=tab==='schema'?`<pre class="dsa-structure">${esc(q.fixture)}</pre>`:`<p class="schema-note">${esc(q.source)} - ${esc(q.topic)}</p><p>${esc(q.lesson)}</p>`;return;
+  }
   if(tab==='schema'){
     $('#data-content').innerHTML=q.tables.length?q.tables.map(name=>`<div class="schema-block"><div class="schema-heading">${icon('table')}<code>${esc(name)}</code></div><div class="schema-columns">${catalog.schema[name].map(([col,type])=>`<code>${esc(col)}</code><span class="schema-type">${esc(type)}</span>`).join('')}</div></div>`).join(''):'<p class="schema-note">No tables needed. This exercise uses a PL/SQL block or DUAL.</p>';
     return;
@@ -123,9 +129,9 @@ function renderResult(){
   const q=question(),p=progress(q.id),r=currentResult;
   $('#attempt-count').textContent=p.attempts?`${p.attempts} attempt${p.attempts!==1?'s':''}`:'No attempts yet';
   $('#result-actions').hidden=!r;
-  if(!r){$('#result-content').innerHTML='<div class="output-empty"><span class="output-prompt" aria-hidden="true">&gt;_</span><div><p>Make your first move.</p><span>Run your query to see the result and check your answer.</span></div></div>';return;}
+  if(!r){$('#result-content').innerHTML=`<div class="output-empty"><span class="output-prompt" aria-hidden="true">&gt;_</span><div><p>Make your first move.</p><span>${DSA?'Run your C function or check your trace answer.':'Run your query to see the result and check your answer.'}</span></div></div>`;return;}
   const passed=r.status==='passed',unsupported=r.status==='unsupported';
-  $('#result-content').innerHTML=`<div class="feedback ${passed?'passed':unsupported?'unsupported':'incorrect'}"><p class="feedback-title">${icon(passed?'check':'error')}${passed?(q.kind==='sql'?'That’s the query.':'That’s the program.'):unsupported?'Outside this runner’s subset.':'Not quite. Keep going.'}</p><p class="feedback-message">${esc(r.message)}</p>${r.code?`<p class="error-code">${esc(r.code)}</p>`:''}</div>${r.actual?.columns?`<div class="result-table">${tableHTML(r.actual)}</div>`:r.actual?.lines?`<pre class="console-output">${esc(r.actual.lines.join('\n')||'(No printed output)')}</pre>`:''}`;
+  $('#result-content').innerHTML=`<div class="feedback ${passed?'passed':unsupported?'unsupported':'incorrect'}"><p class="feedback-title">${icon(passed?'check':'error')}${passed?(DSA?(q.kind==='c'?'That’s the program.':'That’s the answer.'):q.kind==='sql'?'That’s the query.':'That’s the program.'):unsupported?'Outside this runner’s subset.':'Not quite. Keep going.'}</p><p class="feedback-message">${esc(r.message)}</p>${r.code?`<p class="error-code">${esc(r.code)}</p>`:''}</div>${r.actual?.columns?`<div class="result-table">${tableHTML(r.actual)}</div>`:r.actual?.lines?`<pre class="console-output">${esc(r.actual.lines.join('\n')||'(No printed output)')}</pre>`:''}`;
   $('#result-actions').innerHTML=passed?`<div><button type="button" class="text-button" data-view-answer>Why it works ↗</button>${p.assisted?'<button type="button" class="text-button" data-retake>Try independently</button>':'<span class="data-count">Independent solve</span>'}</div><button class="primary-button" type="button" data-next>${index()===roundQuestions().length-1?'Finish round':'Next question'} →</button>`:`<div><button type="button" class="text-button" data-try-again>Try again</button><button type="button" class="text-button" data-view-answer>View answer ↗</button></div>${state.help?'<button type="button" class="text-button" data-focus-hint>Review hint ↑</button>':''}`;
 }
 
@@ -148,7 +154,7 @@ function changeQuestion(i){stash();state.positions[state.round]=i;save();renderQ
 function freshAttempt(id){
   stash();const q=questions.find(q=>q.id===id),p=progress(id);
   p.history=[...(p.history||[]),{draft:p.draft,attempts:p.attempts,solved:p.solved,assisted:p.assisted}].slice(-5);
-  Object.assign(p,{draft:q.starter||'',solved:false,assisted:false,revealed:false,usedHelp:false,hint:0,lastResult:null});
+  Object.assign(p,{draft:q.starter||'',solved:false,assisted:false,revealed:false,usedHelp:false,hint:0,lastResult:null,attempts:0});
   state.round=q.round;state.positions[q.round]=roundQuestions(q.round).findIndex(x=>x.id===id);state.help=false;
   save();closeModal();renderQuestion();$('#editor').focus();toast('Fresh attempt. Help is off; your earlier attempt is kept in the progress export.');
 }
@@ -157,7 +163,7 @@ function closeModal(){if($('#modal').open)$('#modal').close();}
 function openModal(title,subtitle,html,context={}){modalContext=context;$('#modal-title').textContent=title;$('#modal-subtitle').textContent=subtitle;$('#modal-content').innerHTML=html;if(!$('#modal').open)$('#modal').showModal();}
 
 function chooseRounds(){
-  const html='<p class="modal-notice">Every round is open. Start at the beginning, jump to PL/SQL, or rehearse the paper. Your drafts stay where you left them.</p><div class="round-list">'+rounds.map(r=>`<button class="round-option ${r.id===state.round?'selected':''}" type="button" data-round="${esc(r.id)}"><div><span class="round-level">${esc(r.level)}</span><strong>${esc(r.name)}</strong><p>${esc(r.description)}</p></div><div class="round-metrics"><b>${completed(r.id)}</b> / ${r.count} done<span>~${r.minutes} min</span></div></button>`).join('')+'</div>';
+  const html='<p class="modal-notice">Every round is open. Choose the topic you need and work at your own pace. Your drafts stay where you left them.</p><div class="round-list">'+rounds.map(r=>`<button class="round-option ${r.id===state.round?'selected':''}" type="button" data-round="${esc(r.id)}"><div><span class="round-level">${esc(r.level)}</span><strong>${esc(r.name)}</strong><p>${esc(r.description)}</p></div><div class="round-metrics"><b>${completed(r.id)}</b> / ${r.count} done<span>~${r.minutes} min</span></div></button>`).join('')+'</div>';
   openModal('Choose your round','Build up gradually. Or go straight to the part you need.',html,{page:'rounds'});
 }
 function selectRound(id){
@@ -191,7 +197,7 @@ const reference={
   keys:()=>`<h3>Editor shortcuts</h3><table><tr><td>Ctrl / Cmd + Enter</td><td>Run the current answer.</td></tr><tr><td>Tab</td><td>Insert two spaces in the editor.</td></tr><tr><td>Escape, then Tab</td><td>Leave the editor using the keyboard.</td></tr><tr><td>Escape</td><td>Close an open dialog.</td></tr></table><h3>How progress works</h3><p>Drafts, attempts, completed questions, and the mock timer stay in this browser’s local storage. Viewing a solution does not solve a question. A question completed after using help or viewing its answer is marked “with help.” Review keeps those questions available for a second attempt.</p><h3>A good practice loop</h3><p>Read the question. Identify the output columns and key links. Write your query. Predict the result. Run it. If it fails, change one thing and try again. After looking at an answer, close it and rebuild the query yourself.</p>`,
   engine:()=>`<h3>A focused practice engine</h3><p>This is a local teaching sandbox, not a connection to an Oracle database. SQL runs on fresh in-memory datasets using SQLite with common Oracle syntax and functions adapted. PL/SQL is parsed and interpreted for the constructs used in these exercises. There are no API keys or online services.</p><h3>What gets checked</h3><p>SQL answers are compared by result columns and rows, retaining duplicate counts. Requested sorting is checked where specified; aliases and formatting may differ. Every answer is checked on three datasets, including changed values, ties, and missing matches.</p><p>PL/SQL answers actually run: routine parameters and return values, printed rows and totals, and trigger effects are compared with reference behavior. This is not keyword matching. A task may additionally require its teaching construct, such as an explicit cursor.</p><h3>Supported PL/SQL</h3><p>Anonymous blocks; scalar and row variables; SELECT INTO; IF/ELSIF/ELSE; numeric, WHILE, basic and cursor loops; explicit and parameterized cursors; OPEN/FETCH/CLOSE; procedures with IN/OUT/IN OUT; functions; ordinary exception handlers; and the row-trigger patterns in these rounds.</p><h3>Keep these limits in mind</h3><p>The sandbox is not a complete Oracle compiler. Packages, dynamic SQL, object types, VARRAYs, advanced trigger timing and full Oracle constraint behavior are outside it. Unsupported syntax is reported; an accepted sandbox answer should still be run in your lab’s Oracle environment when available.</p><p>The user-provided scope is SQL queries (including nested/correlated), procedures with parameters, functions, triggers and cursors. Other assignment topics are deliberately excluded.</p><h3>Paper corrections</h3><p>The sample’s FLNO is a primary key with one arrival airport, so one FLNO cannot serve all Kerala cities. The coverage exercise asks for airlines instead. “All ... if any” explicitly means LEFT JOIN. “Delete foreign keys” is interpreted as deleting child rows. Orders and date fields use safe names, and the composite address is flattened into ordinary columns.</p><p>Flight-key cascade tests cover one key changing to an unused key. On real Oracle use appropriate deferred FK timing; this is not a multi-row key-swap implementation.</p><h3>Sources</h3><p>Your four-page sample paper, topic photo, and DBMS assignments inform the questions. Only examples within the specified exam topics are used.</p><p><a href="https://docs.oracle.com/en/database/oracle/oracle-database/19/lnpls/cursors-overview.html" target="_blank" rel="noreferrer">Oracle cursor documentation ↗</a> · <a href="https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Using-Subqueries.html" target="_blank" rel="noreferrer">Oracle subqueries ↗</a></p>`
 };
-function openReference(tab='sql'){
+function sqlReference(tab='sql'){
   openModal('Keep the syntax close.','Only the patterns used in your SQL and PL/SQL rounds.',`<div class="reference-tabs">${[['sql','SQL patterns'],['plsql','PL/SQL patterns'],['keys','Using the lab'],['engine','Practice engine']].map(([id,label])=>`<button type="button" data-reference="${id}" class="${id===tab?'active':''}">${label}</button>`).join('')}</div><div class="reference-body">${reference[tab]()}</div>`,{page:'reference',tab});
 }
 
@@ -277,7 +283,7 @@ $('#modal-content').addEventListener('click',async e=>{
   if(b.hasAttribute('data-start-mock'))startMock();
   if(b.hasAttribute('data-finish-mock'))finishMock();
   if(b.hasAttribute('data-retake-mock'))mockIntro();
-  if(b.hasAttribute('data-export')){stash();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='sql-lab-progress.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Progress exported.');}
+  if(b.hasAttribute('data-export')){stash();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=DSA?'dsa-lab-progress.json':'sql-lab-progress.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Progress exported.');}
   if(b.hasAttribute('data-reset'))openModal('Reset your practice?','This clears drafts, attempts, completed questions, and the mock timer on this device.','<div class="answer-toolbar"><button type="button" class="secondary-button" data-confirm-reset>Reset progress</button><button type="button" class="text-button" data-open-review>Keep my progress</button></div>',{page:'reset'});
   if(b.hasAttribute('data-confirm-reset')){state=initialState();save();closeModal();renderQuestion();toast('A fresh start.');}
 });
@@ -290,7 +296,23 @@ async function boot(){
     if(!rounds.some(r=>r.id===state.round))state.round=rounds[0].id;
     const requestedRound=new URLSearchParams(window.location.search).get('round');
     if(requestedRound&&rounds.some(r=>r.id===requestedRound))state.round=requestedRound;
+    if(DSA){
+      document.title='DSA / LAB - trees & graphs';
+      $('.brand > span').innerHTML='DSA <span class="brand-slash">/</span> LAB';
+      $('.brand').setAttribute('aria-label','DSA Lab');
+      $('#schema-tab').textContent='Structure';$('#data-tab').textContent='Concept';
+      $('label[for="editor"]').textContent='Write your C function or trace answer';
+      $('.work-pane').setAttribute('aria-label','DSA worksheet');
+      $('.workspace-footer > span:last-child').innerHTML='Trees & graphs - <button id="dsa-reference" class="inline-button" type="button">Runner & reference</button>';
+      $('#dsa-reference').onclick=()=>openReference();
+    }
+    $(DSA?'#dsa-mode':'#dbms-mode').setAttribute('aria-current','page');
     renderQuestion();setInterval(renderClock,1000);
   }catch(e){$('#page-title').textContent='The lab is offline.';$('#round-description').textContent='Start the local Python server, then reload this page.';$('#question-title').textContent='Could not load questions';$('#question-prompt').textContent=e.message;$('#main').setAttribute('aria-busy','false');$('#run-query').disabled=true;}
 }
 boot();
+
+function openReference(tab){
+ if(!DSA)return sqlReference(tab);
+ openModal('DSA reference','Module 4 Trees and Module 5 Graphs',`<div class="reference-body"><h3>Tree traversals</h3><p>Preorder: root, left, right. Inorder: left, root, right. Postorder: left, right, root. Level order uses a queue. DFS traversals visit n nodes in O(n) time.</p><h3>Operations and BST</h3><p>Count(NULL)=0. Height(NULL)=-1, height(leaf)=0. Equality compares values and shape. A deep copy allocates every node. BST operations take O(h); the unbalanced worst case is O(n). For two-child deletion use the inorder successor or predecessor.</p><h3>Expression and threaded trees</h3><p>Postfix construction pops right before left. Evaluate in postorder. A thread flag distinguishes a real child from an inorder predecessor or successor link.</p><h3>AVL and Red-Black</h3><p>AVL balance factor = height(left) - height(right), always -1, 0, or 1. LL: rotate right. RR: rotate left. LR: left at child, then right. RL: right at child, then left. Red-Black: black root and NIL leaves, no red-red edge, equal black-height. Black-height excludes the node and includes NIL.</p><h3>Graphs</h3><p>A simple undirected graph has at most V(V-1)/2 edges. Degree sum = 2E. In a digraph, sum of indegrees = sum of outdegrees = E. Matrix space O(V squared); list space O(V+E). DFS uses a stack or recursion, BFS a queue. With lists both take O(V+E); with a matrix O(V squared).</p><h3>Connectivity and spanning trees</h3><p>Run DFS/BFS from each unvisited vertex to find undirected components. A connected graph has a spanning tree with V-1 edges. With c components a spanning forest has V-c edges. A spanning tree need not minimize weight. Directed reachability differs from undirected connectivity.</p><h3>Local C runner</h3><p>Write only the requested functions. Standard headers and displayed structures are supplied. The portable Windows package includes a compiler. Source installs need GCC or Clang on PATH. Each test has a two-second limit. This compiler runs C code on this computer; it is not a security sandbox. Use your own practice code.</p></div>`);
+}

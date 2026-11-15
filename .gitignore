@@ -15,6 +15,9 @@ sql-lab-progress*.json
 *.log
 .taste-skill/
 work/
+dist/
+build/
+*.zip
 
 # Editor/OS files
 .vscode/

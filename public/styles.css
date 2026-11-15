@@ -16,3 +16,9 @@ dialog{background:var(--surface);color:var(--text);border:1px solid var(--border
 @media(max-width:540px){.text-button,.data-tabs button,.hint-row p,.schema-columns code{font-size:13px}.concept p{font-size:13px}.schema-type{font-size:12px}.worksheet-header{font-size:12px}.mobile-editor-jump{margin-top:10px}}
 @media(max-width:650px){.round-toolbar:has(#mock-clock:not([hidden])){flex-wrap:wrap}.round-toolbar:has(#mock-clock:not([hidden])) .round-tools{width:100%;justify-content:space-between;margin-top:4px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+
+.mode-switch{display:flex;gap:3px;border:1px solid var(--border);border-radius:6px;padding:3px}.mode-switch a{padding:5px 10px;text-decoration:none;color:var(--muted);font-size:12px}.mode-switch a[aria-current=page]{background:var(--raised);color:var(--text);border-radius:3px}.dsa-structure{font:13px/1.7 var(--mono);white-space:pre-wrap;margin:0;overflow-wrap:anywhere}.topbar{gap:24px}.save-indicator{margin-left:auto}
+@media(max-width:800px){.topbar{flex-wrap:wrap;height:auto;min-height:80px;padding-block:12px;gap:12px}.topbar nav{margin-left:auto}.topbar .save-indicator{display:none}}
+@media(max-width:540px){.topbar nav{width:100%;justify-content:space-between;display:flex}.mode-switch a{min-height:36px;display:flex;align-items:center}.topbar .nav-button{min-height:40px}.data-tabs button,.question-pagination button,.hint-row button{min-height:44px}}
+
+.data-content pre.dsa-structure{font-size:13px;line-height:1.7}.mode-switch a{font-size:13px}

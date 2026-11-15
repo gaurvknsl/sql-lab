@@ -80,6 +80,24 @@ class HTTPChecks(unittest.TestCase):
         result = self.get_json('/api/hints', {'id': 'null-phone', 'code': 'SELECT * FROM customer WHERE phone = NULL;'})
         self.assertTrue(any('IS NULL' in hint for hint in result['diagnostics']))
 
+    def test_dsa_catalog_solution_and_trace_grade(self):
+        catalog=self.get_json('/api/dsa/catalog')
+        self.assertEqual(len(catalog['questions']),40)
+        answer=self.get_json('/api/dsa/answer?id=dsa-avl-ll')
+        self.assertEqual(answer['answer'],'LL 20')
+        result=self.get_json('/api/dsa/grade',{'id':'dsa-avl-ll','code':'LL 20'})
+        self.assertEqual(result['status'],'passed')
+
+    def test_dsa_visible_expression_output(self):
+        expected=self.get_json('/api/dsa/expected?id=dsa-expr-eval')
+        self.assertEqual(expected['lines'],['20'])
+
+    def test_dsa_cross_origin_submission_is_rejected(self):
+        with self.assertRaises(HTTPError) as caught:
+            self.request('/api/dsa/grade',{'id':'dsa-avl-ll','code':'LL 20'},
+                         {'Origin':'https://example.com'})
+        self.assertEqual(caught.exception.code,403)
+
     def test_unknown_question_and_table_return_404(self):
         for path in ('/api/answer?id=missing', '/api/table?name=missing'):
             with self.subTest(path=path):

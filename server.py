@@ -17,6 +17,7 @@ from urllib.parse import urlparse, parse_qs
 from urllib.request import urlopen
 from engine import TODAY, LabError, Runtime, database, date_value, display, normalized_rows, preview, same_rows, tokens, to_char
 from questions import QUESTIONS, BY_ID, ROUNDS, SCHEMA
+import dsa
 
 ROOT=Path(__file__).resolve().parent
 PUBLIC=ROOT/'public'
@@ -229,6 +230,14 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Content-Length',str(len(payload))); self.end_headers(); self.wfile.write(payload)
     def do_GET(self):
         url=urlparse(self.path)
+        if url.path=='/api/dsa/catalog':
+            return self.send_json(dsa.public_catalog())
+        if url.path in ('/api/dsa/answer','/api/dsa/expected'):
+            q=dsa.BY_ID.get(parse_qs(url.query).get('id',[''])[0])
+            if not q:return self.send_json({'error':'Question not found'},404)
+            if url.path.endswith('/answer'):return self.send_json({'answer':q['answer'],'explanation':q['explanation'],'lesson':q['lesson']})
+            expected=q['spec']['expected'][q['visibleCase']] if q['kind']=='c' else q['answer']
+            return self.send_json({'lines':[expected or '(No output)']})
         if url.path=='/api/catalog':
             public=[{k:v for k,v in q.items() if k not in ('answer','spec')} for q in QUESTIONS]
             return self.send_json({'rounds':ROUNDS,'questions':public,'schema':SCHEMA,'today':str(TODAY),'engine':'Local Oracle teaching sandbox','version':1})
@@ -264,7 +273,15 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             size=int(self.headers.get('Content-Length','0'))
             if size<0 or size>40000: return self.send_json({'error':'Request too large'},413)
-            data=json.loads(self.rfile.read(size)); question=BY_ID.get(data.get('id'))
+            data=json.loads(self.rfile.read(size))
+            if self.path in ('/api/dsa/grade','/api/dsa/hints'):
+                question=dsa.BY_ID.get(data.get('id'))
+                if not question:return self.send_json({'error':'Question not found'},404)
+                code=data.get('code','')
+                if not isinstance(code,str):return self.send_json({'error':'Code must be text'},400)
+                if self.path.endswith('/hints'):return self.send_json({'diagnostics':[]})
+                return self.send_json(dsa.grade(question,code))
+            question=BY_ID.get(data.get('id'))
             if not question: return self.send_json({'error':'Question not found'},404)
             code=data.get('code','')
             if not isinstance(code,str): return self.send_json({'error':'Code must be text'},400)
@@ -278,8 +295,9 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
-    parser=argparse.ArgumentParser(); parser.add_argument('--port',type=int,default=8765); parser.add_argument('--open',action='store_true'); args=parser.parse_args()
+    parser=argparse.ArgumentParser(); parser.add_argument('--port',type=int,default=8765); parser.add_argument('--open',action='store_true'); parser.add_argument('--mode',choices=('dbms','dsa'),default='dbms'); args=parser.parse_args()
     url=f'http://127.0.0.1:{args.port}'
+    app_url=url+('/?mode=dsa' if args.mode=='dsa' else '/')
     try: server=LocalServer(('127.0.0.1',args.port),Handler)
     except OSError:
         try:
@@ -287,12 +305,12 @@ def main():
                 existing=json.load(response)
             if existing.get('engine')=='Local Oracle teaching sandbox':
                 print(f'SQL / LAB is already running at {url}.')
-                if args.open: webbrowser.open(url)
+                if args.open: webbrowser.open(app_url)
                 return 0
         except Exception: pass
         print(f'Port {args.port} is busy. Run again with --port 8766.'); return 1
     print(f'\n  SQL / LAB\n  {len(QUESTIONS)} exercises / {len(ROUNDS)} rounds\n  Local: {url}\n  Ctrl+C stops the server.\n',flush=True)
-    if args.open: threading.Timer(0.8,lambda:webbrowser.open(url)).start()
+    if args.open: threading.Timer(0.8,lambda:webbrowser.open(app_url)).start()
     try: server.serve_forever()
     except KeyboardInterrupt: print('\nSQL / LAB stopped.')
     finally: server.server_close()

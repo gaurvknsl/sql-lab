@@ -1,119 +1,122 @@
-# SQL / LAB
+# SQL + DSA Lab
 
-A local, exam-focused Oracle SQL and PL/SQL practice website. **107 exercises, 12 selectable rounds, and a 60-minute 40-mark mock.**
+A local practice website for **Oracle-style SQL, PL/SQL, and Data Structures & Algorithms**. Read a question, write an answer, run it, and learn from the feedback.
 
 [![Tests](https://github.com/gaurvknsl/sql-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/gaurvknsl/sql-lab/actions/workflows/tests.yml)
+[![Portable build](https://github.com/gaurvknsl/sql-lab/actions/workflows/portable.yml/badge.svg)](https://github.com/gaurvknsl/sql-lab/actions/workflows/portable.yml)
 
-## Run on another laptop
+**147 exercises · 17 rounds · Works offline after download**
 
-You need:
+[Download the latest Windows ZIP](https://github.com/gaurvknsl/sql-lab/releases/latest/download/SQL-DSA-Lab-Portable.zip) · [Releases](https://github.com/gaurvknsl/sql-lab/releases) · [Report an issue](https://github.com/gaurvknsl/sql-lab/issues)
 
-- **Python 3.10 or newer**, with its standard-library SQLite support. The normal installers from [python.org](https://www.python.org/downloads/) include it. On Windows, enable the Python launcher or add Python to PATH during installation.
-- **Git**, to clone and pull updates. Get it from [git-scm.com](https://git-scm.com/downloads), or download and extract this repository's ZIP instead.
-- A modern web browser.
+![DSA practice worksheet with tree structure, C editor, and hints](docs/images/dsa-preview.jpg)
 
-No Oracle installation, Codex runtime, Node.js, API key, account, pip packages, virtual environment, database setup, or frontend build is needed. All source, exercise data, styles, and icons are included. After the first clone, practice works offline.
+## Start on Windows — no installation
 
-### Windows
+1. Download **SQL-DSA-Lab-Portable.zip** from the latest release.
+2. Extract the **entire ZIP** to a normal folder.
+3. Open **start.exe**. The website opens automatically in your browser.
+4. Choose **DBMS** or **DSA** in the header.
 
-Open PowerShell or Command Prompt:
+The portable package includes Python and a C compiler for **Windows 10/11 on 64-bit Intel/AMD laptops**. No Oracle, Node.js, API key, account, or separate Python/compiler installation is needed. Keep the console window open while practicing; press **Ctrl+C** or close it to stop.
 
-```powershell
-git clone https://github.com/gaurvknsl/sql-lab.git
-cd sql-lab
-py -3 start.py
-```
+Use `start.cmd` if you prefer the script launcher. Do not run the app from inside the ZIP. If the browser does not open, visit **http://127.0.0.1:8765/?mode=dsa**.
 
-You can also double-click **Start Lab.cmd** in the cloned folder. If your installation uses `python` instead of `py`, run `python start.py`.
+An occupied port can be changed with `start.exe --port 8766`. Use that port in the browser URL too.
 
-### macOS or Linux
+## What you can practice
+
+| Mode | Exercises | Rounds | Topics |
+| --- | ---: | ---: | --- |
+| DBMS | 107 | 12 | SQL queries, joins, groups, nested/correlated queries, PL/SQL blocks, cursors, procedures, functions, triggers, hospital assignment, timed mock |
+| DSA | 40 | 5 | Trees, BSTs, expression/threaded trees, AVL and Red-Black traces, graph representations, DFS/BFS, components, spanning trees |
+
+### DSA rounds
+
+| Round | Questions | Practice |
+| --- | ---: | --- |
+| Tree traversals | 7 | Recursive and iterative preorder/inorder/postorder; level order |
+| Tree operations & BST | 7 | Count, height, deep copy, equality, search, insertion, deletion |
+| Expression, threaded & balanced trees | 11 | Expression construction/evaluation, threaded insertion/traversal, AVL rotations, Red-Black properties |
+| Graph representations & traversals | 7 | Degree, DFS, BFS, components, spanning forests, adjacency matrix/list |
+| Graph concepts & exam traces | 8 | Definitions, paths/cycles, directed degrees, connectivity, traversal traces, spanning trees, complexity |
+
+DSA has **25 C function exercises** and **15 written traces**. Write only the requested functions; the runner supplies headers, structures, and a test `main`. C solutions are compiled and checked against several cases. AVL insertion/rotations and Red-Black questions use written traces.
+
+## Learning features
+
+- Question structure or schema, sample data, and expected output beside the editor.
+- Help mode with concepts, progressive hints, and worked solutions.
+- Compiler errors and result feedback; C programs have a two-second limit per test.
+- Review for difficult questions and assisted attempts.
+- A 60-minute, 40-mark DBMS mock exam.
+- Saved drafts and progress, with separate storage for DBMS and DSA.
+
+Progress lives in the current browser on the current laptop. Keep the same browser profile and port to retain it. The ZIP and GitHub repository do not contain personal progress. Review provides a JSON export.
+
+## Run from source — Windows, macOS, Linux
+
+You need **Python 3.10+**. C coding exercises also need **GCC or Clang on PATH**; DBMS and written traces work without a compiler.
 
 ```sh
 git clone https://github.com/gaurvknsl/sql-lab.git
 cd sql-lab
-python3 start.py
+python3 start.py --mode dsa
 ```
 
-Alternatively, run `./start.sh` or `sh start.sh`.
+On Windows, use `py -3 start.py --mode dsa` or double-click `start.cmd`. On macOS/Linux, use `sh start.sh --mode dsa`; macOS also has `start.command`. To start directly in DBMS mode, omit `--mode dsa`.
 
-The browser opens at **http://127.0.0.1:8765**. Keep the server's terminal open while practising. If the browser does not open automatically, enter that address yourself. Stop the server with **Ctrl+C** in the terminal. Starting the launcher twice reopens the existing local app.
+The browser opens at **http://127.0.0.1:8765**. Keep the terminal open. No pip packages or frontend build step are needed.
 
-If another application occupies that port, run `py -3 start.py --port 8766` on Windows or `python3 start.py --port 8766` on macOS/Linux. Open the printed URL.
+> The source runs across these operating systems. The prebuilt runtime and compiler inside the Windows ZIP are Windows-only.
 
-### Get updates later
+## Update your copy
 
-Stop the server, open a terminal in the cloned folder, then run:
+**Portable ZIP:** download the latest release and extract it to a fresh folder. Keep using the same browser and port for existing progress.
+
+**Git checkout:** stop the server, run `git pull --ff-only`, then start it again.
+
+Every push to `main` runs tests and builds a portable ZIP in GitHub Actions. Tagged `v*` versions publish that ZIP as a GitHub Release. The latest stable release and the latest main-branch build can therefore differ.
+
+## How the runners work
+
+**DBMS:** Oracle-style SQL is adapted to fresh SQLite in-memory fixtures. A local interpreter executes the supported PL/SQL subset. Answers are checked by output or behavior across changing data, rather than by matching reference-answer text. See the [detailed DBMS guide](docs/DBMS_GUIDE.md) for supported syntax, assignment details, and limitations.
+
+**DSA:** GCC/Clang in source installs, or bundled TinyCC in the Windows package, compiles submitted C functions with a provided test harness. Checks include empty trees, isolated vertices, disconnected graphs, and pointer-copy independence. Written traces compare the requested values and order. Behavioral tests do not prove an algorithm's complexity.
+
+The server binds only to **127.0.0.1** and rejects cross-origin submissions. SQL/PLSQL practice is a teaching subset, **not a full Oracle installation**. C code runs on your computer with time limits and **is not a security sandbox**: use your own practice code. This app is intended for local use, not public server hosting.
+
+## Development and checks
 
 ```sh
-git pull --ff-only
-```
-
-Start the app again using the same command as above. There are no dependencies to reinstall. Browser-saved progress stays on that laptop when you use the same browser profile and port; it is not stored in Git or transferred to another laptop.
-
-For a server without automatic browser opening, use `python server.py` (or `py -3 server.py` / `python3 server.py`). Open the website through the server: opening `public/index.html` directly cannot reach the exercise runner.
-
-## How to practise
-
-### Today's exam: hospital assignment 5/6
-
-Choose **Today's exam · Hospital** at the top of the round picker, or open **http://127.0.0.1:8765/?round=hospital**. It contains 27 questions: the four assignment queries, 16 additional SQL questions on the same schema, and seven PL/SQL exercises covering SELECT INTO, cursors, procedures, functions and triggers.
-
-The visible PATIENT, DOCTOR, WARD and PHARMACY rows reproduce the inserted sample values in the assignment screenshots, including ward **90**, the trailing space in **ORTHO **, and the September 2026 purchases. No patient records beyond that assignment's synthetic examples are inferred. Separate grading datasets add explicit edge cases.
-
-The original prompt names ward 5, while the inserted rows and submitted query use ward 90; the practice question follows the actual rows and explains this. The original April query correctly has no visible matches, and uses a month function rather than applying LIKE to a DATE. “Joint pains” follows the assignment's stated orthopedic-doctor interpretation because there is no diagnosis field. The pharmacy key is `(billno, medicinename)` and the ward key is `(wno, bed_no)`.
-
-Choose any round from the selector at the top. Start with First queries if needed. Read the question and use Schema or Sample data to understand the tables. Type the query and select Run query, or press Ctrl+Enter. On an incorrect attempt, use Try again or View answer. A correct attempt offers the next question. You can skip and return to any question from Question list.
-
-Help mode shows the relevant concept, progressive hints, and common-error diagnostics while typing. Normal mode hides these. Reference contains only the SQL and PL/SQL patterns used in the rounds. Viewing an answer does not complete a question. Completed questions that used help are distinguished from independent solves and remain in Review.
-
-Drafts and progress are saved in this browser's local storage. Keep the same browser and port to retain them. Clearing browser data or switching browser profiles removes that local history. Review offers a JSON export and a confirmed reset of local progress.
-
-The mock is five SQL questions at 4 marks each and two PL/SQL questions at 10 marks each. It is a practice structure based on the topic photo, not a prediction of the actual paper. Its 60-minute timer keeps running across navigation and reloads. Independent and assisted marks are reported separately; the real examiner may award partial credit.
-
-## Syllabus boundary
-
-Included: simple and complex SELECT queries, Oracle string/NULL/date functions used by the questions, joins, grouping, nested/correlated queries, PL/SQL foundations needed for procedures with parameters, functions, triggers, and cursors.
-
-The library round adapts relevant question patterns from DBMS assignments and a lab assessment. Sample records are invented for practice; they are not copied personal records. The source PDFs are not required or included. Object types, VARRAYs, schema-design/DDL exercises, views, unrelated puzzles, and other additional assignment topics are not lessons or scored tasks here.
-
-The sample-paper round covers all ten SQL questions, both cascade-trigger patterns, and both cursor questions. Corrections are attached to the relevant questions:
-
-- The single-arrival FLNO schema cannot model one flight number arriving in multiple Kerala cities. The corrected coverage task asks for airlines reaching every represented Kerala city.
-- “All ... if any” explicitly preserves unmatched flights/customers using LEFT JOIN.
-- “Delete foreign keys” means delete dependent rows, not drop a constraint.
-- ORDER becomes ORDERS, date fields have explicit names, and the customer's address is flattened.
-- The introductory update-cascade exercise targets FLIGHT -> SEAT; the sample-paper task also requires AIRPORT -> both FLIGHT references. The sample delete task covers both CUSTOMER -> ORDERS and ITEM -> ORDERS. Key updates are single-key changes to unused keys. Real Oracle requires compatible foreign-key constraint timing, such as deferrable constraints deferred before the key change; the sandbox does not enforce Oracle constraint timing.
-
-## What the runner is, and its limits
-
-This is a **local teaching sandbox, not a full Oracle database**. It does not connect to, reset, or modify the Oracle installation on this laptop.
-
-SQL runs against fresh SQLite in-memory databases, with common Oracle date literals, SYSDATE, NVL/NVL2, TO_DATE, TO_CHAR, TRUNC, MOD, DECODE, INITCAP and concatenation patterns adapted. Result comparison retains duplicate counts, permits arbitrary aliases, and checks order when the task requests it. Three datasets vary prices, ties, counts, names, missing matches, and dates so hardcoded display-only answers fail.
-
-PL/SQL is tokenized, parsed and interpreted; it is not graded by matching its text to the reference. The runner supports the subset used by these exercises: variables, records, SELECT INTO, IF/ELSIF/ELSE, loops, explicit and parameterized cursors, manual OPEN/FETCH/CLOSE, ordinary exceptions, procedures and parameter modes, functions, and row-trigger actions. Routines are invoked with multiple inputs, and trigger effects are checked on whole-table snapshots. Equivalent supported programs can pass.
-
-It does not provide complete Oracle parsing, type enforcement, NLS behavior, implicit conversions, NULL concatenation in arbitrary SQL, transactions/constraint timing, all date format models, SQL*Plus commands, packages, advanced trigger features, dynamic SQL, or every legal PL/SQL construct. Unimplemented constructs should produce an explicit error, and not be mistaken for a verdict from Oracle. Supported examples are Oracle-style learning material; use the actual lab Oracle environment for final compatibility checks when available.
-
-Execution has input, row, instruction and loop limits. The HTTP server listens only on 127.0.0.1, rejects cross-origin POSTs, and requires no credentials. All exercise databases live in memory and are discarded after checking. The lab clock is fixed at **29 October 2026** so relative-date answers remain reproducible.
-
-## Development
-
-- `start.py`, `Start Lab.cmd`, `start.sh`: portable launchers.
-- `server.py`: local HTTP endpoints and behavioral grading.
-- `engine.py`: SQLite fixtures, Oracle helpers, PL/SQL parser and bounded interpreter.
-- `questions.py`: curriculum, hints, schemas, sample-paper corrections and reference solutions.
-- `hospital.py`: assignment 5/6 hospital rows, hidden variants, schema and the dedicated exam round.
-- `public/`: buildless HTML, CSS and JavaScript frontend.
-- `test_lab.py`: reference, alternate-answer, negative and runtime tests.
-- `test_http.py`: real HTTP endpoint and asset tests.
-- `test_hospital.py`: original-row fidelity and hospital-query edge cases.
-- `.github/workflows/tests.yml`: Windows/Linux checks on Python 3.10 and 3.13, plus macOS on Python 3.13.
-- `DESIGN.md`: brief, direction and visual QA notes.
-
-Run the checks with:
-
-```powershell
 python -m unittest discover -v
+python start.py --help
 ```
 
-Use `py -3` on Windows or `python3` on macOS/Linux if that is the Python command installed on your machine. Tests use only the Python standard library and temporary loopback ports. No credentials or internet access are required for the test suite.
+The suite currently has **66 tests**, including every reference solution, wrong-answer cases, HTTP endpoints, compiler feedback, and execution timeouts. C tests require a compiler; without one, the relevant tests are explicitly skipped. CI runs on Windows, Linux, and macOS.
+
+| Path | Purpose |
+| --- | --- |
+| `server.py` | HTTP endpoints and DBMS grading |
+| `engine.py` | Oracle helpers, fixtures, PL/SQL interpreter |
+| `questions.py`, `hospital.py` | DBMS curriculum and assignment data |
+| `dsa.py` | DSA curriculum, C harnesses and grading |
+| `public/` | HTML, CSS, JavaScript and icon |
+| `scripts/build_portable.py` | Portable Windows package builder |
+| `scripts/start_windows.c` | Source for the native `start.exe` launcher |
+| `.github/workflows/` | Test matrix and portable build/release workflows |
+| `AGENTS.md` | Project maintenance instructions |
+
+### Build the Windows ZIP
+
+On Windows with Python 3.13 installed:
+
+```powershell
+py -3.13 scripts/build_portable.py
+```
+
+The builder downloads checksum-verified TinyCC binaries and matching source, bundles the current Python runtime without site packages, and creates `dist/SQL-DSA-Lab-Portable.zip` plus a SHA-256 checksum. Its first build needs internet access. Build inputs can be placed in `build/downloads` beforehand for an offline rebuild.
+
+Third-party runtime/compiler licenses and corresponding TinyCC source are included in the ZIP. [Python](https://www.python.org/) and [TinyCC](https://bellard.org/tcc/) remain the work of their respective authors.
+
+See [CHANGELOG.md](CHANGELOG.md) for release changes. The supplied syllabus slide decks are not required or redistributed.
